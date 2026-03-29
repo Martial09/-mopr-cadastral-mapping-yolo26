@@ -1,0 +1,9 @@
+torch
+torchvision
+ultralytics
+opencv-python
+rasterio
+geopandas
+shapely
+numpy
+pandas
