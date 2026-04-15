@@ -1,65 +1,113 @@
-# 🚨 IMPORTANT NOTE FOR EVALUATORS 🚨
-**Regarding the Google Form Portal Submission:**
+🛰️ Dual-Branch AI Pipeline for Rural Cadastral Mapping
+Note for Evaluators: The Google Form ZIP contains only our baseline YOLO Seg 26m architecture, as the portal does not allow post-submission edits. This GitHub repository is our complete, final submission. It includes the full dual-model pipeline (YOLO Seg 26m for buildings + LinkNet/DeepLabV3+ for roads), automated inference scripts, and the full suite of high-resolution vector PDFs in Live-Demo-Results/.
 
-Because the official Google Form does not allow us to edit or update documents after the initial submission, the ZIP file attached there only contains our baseline **YOLO Seg 26m** architecture. 
+📐 Solution Overview & System Architecture
+Rural Indian topographies present complex challenges — densely packed overlapping roofs and roads heavily occluded by tree canopies make a single-model approach insufficient. We engineered a Dual-Branch Pipeline that treats buildings and roads as fundamentally different topological problems.
 
-**THIS GitHub repository contains our complete, final, and fully integrated submission.** Please evaluate this repository as our final product. It includes our fully upgraded **dual-model pipeline** (YOLO Seg 26m for buildings + LinkNet/DeepLabV3+ for roads), the automated inference scripts, and the full suite of high-resolution vector PDFs in the `Live-Demo-Results/` folder.
+Branch A — Instance Segmentation for Buildings (YOLO Seg 26m)
+Buildings are discrete objects. We use YOLO Seg 26m for instance segmentation (not semantic segmentation), which:
+Draws distinct bounding boxes and masks for individual structures, preventing adjacent houses from blending into a single polygon.
+Simultaneously extracts building footprints and classifies specific roof material types (BuiltUp_Roof 1–4) in a single pass.
 
----
+Branch B — Semantic Ensembling for Road Networks
+Roads are continuous topological networks, not discrete objects. To handle canopy occlusion and class imbalance, we built a two-model ensemble:
+Model
+Architecture
+Role
+LinkNet
+ResNet34
+High-recall binary segmenter — aggressively identifies road pixels (threshold: 0.2) to capture faint village lanes and dirt paths
+DeepLabV3+
+ResNet50
+Multiclass semantic segmenter — classifies road pixels from LinkNet into specific categories (State Highway, District Road, Village Road, Lane, Footpath)
 
-## 1. Proposed Solution & System Architecture
+Direct Masking Logic: LinkNet acts as the high-recall base layer; DeepLabV3+ votes on specific road classification — ensuring unbroken topological continuity.
 
-Because rural Indian topographies present complex challenges—such as densely packed overlapping roofs and roads heavily occluded by tree canopies—a standard single-model approach is insufficient. We engineered a **Dual-Branch Pipeline** that treats buildings and roads as fundamentally different topological problems.
+Post-Processing & GIS Engine
+Raw AI pixel outputs are noisy. Our Python inference scripts contain a custom GIS engine that cleans outputs before export:
+Morphological Scissors (cv2.morphologyEx): An aggressive shrink-and-restore (erosion/dilation) algorithm physically severs touching building roofs into individual property records. For roads, morphological closing bridges gaps caused by overhanging trees.
+Geometric Filtering: Automatically removes "spiderweb" artifacts by filtering polygons with extreme aspect ratios or areas below MIN_AREA_PX.
+Metric Conversion & Attribute Generation: Raw pixel coordinates are dynamically projected into a real-world metric CRS (EPSG:32643). Using geopandas and shapely, the pipeline calculates exact metric properties (SHAPE_Area, SHAPE_Leng) and compiles them into a production-ready .gpkg Attribute Table.
 
-### Branch A: Instance Segmentation for Buildings
-Buildings are discrete objects. We utilized **YOLO Seg 26m** to perform instance segmentation rather than semantic segmentation.
-* **Why YOLO Seg 26m:** It excels at drawing distinct bounding boxes and masks for individual structures, preventing adjacent houses from blending into a single massive polygon.
-* **Multi-Class Roof Detection:** The model simultaneously extracts the building footprint and classifies the specific roof material (BuiltUp_Roof 1 through 4) in a single pass.
+💡 Uniqueness & Innovation
+Most systems conflate geometry extraction with object classification. We separate them:
+A binary mask acts as a structural firewall — multiclass labels are only assigned where roads actually exist, eliminating random mislabels.
+Topological post-processing enforces consistent classification across every road segment.
+Morphological patching closes pixel-level gaps, producing seamless connected road vectors.
+YOLO Seg 26m instance segmentation cleanly resolves densely packed structures that confuse semantic methods.
 
-### Branch B: Semantic Ensembling for Road Networks
-Roads are continuous topological networks, not discrete objects. To solve canopy occlusion and class imbalance, we built an ensemble pipeline:
-* **Model 1 (LinkNet - ResNet34):** A highly sensitive binary segmenter trained exclusively to ask: *"Is this pixel a road?"* It operates with a low threshold (`0.2`) to aggressively capture faint village lanes and dirt paths that heavier models miss.
-* **Model 2 (DeepLabV3+ - ResNet50):** A multiclass semantic segmenter that takes the road pixels identified by LinkNet and classifies them into specific categories (State Highway, District Road, Village Road, Lane, Footpath).
-* **Direct Masking Logic:** LinkNet acts as the high-recall base layer, and DeepLabV3+ votes on the specific road classification, ensuring unbroken topological continuity.
+🛠️ Technology Stack
+Category
+Tools / Libraries
+Core Framework
+Python, PyTorch, Segmentation Models PyTorch (SMP)
+Road Segmentation
+LinkNet (ResNet34), DeepLabV3+ (ResNet50)
+Building Segmentation
+YOLO Seg 26m
+Geospatial I/O
+Rasterio (sliding window inference)
+Post-Processing
+OpenCV (morphology), SciPy (connected components)
+Vector Output
+Shapely (geometry), GeoPandas (GeoPackage .gpkg)
 
-### The Post-Processing & GIS Engine (The "Secret Weapon")
-Raw AI pixel outputs are messy. Our automated Python scripts (`inference_buildings.py` and `inference_roads.py`) contain a custom Geographic Information System (GIS) engine to clean the data before export:
-* **Morphological Scissors:** We apply advanced mathematical morphology (`cv2.morphologyEx`). For buildings, an aggressive shrink-and-restore algorithm (erosion/dilation) guarantees that touching roofs are physically severed into individual property records. For roads, morphological closing bridges the gaps caused by overhanging trees.
-* **Geometric Filtering:** We automatically delete "spiderweb" artifacts by filtering out polygons with extreme aspect ratios or areas below a strict pixel threshold (`MIN_AREA_PX`).
-* **Metric Conversion & Attribute Generation:** The scripts dynamically project the raw pixel coordinates into a real-world metric CRS (`EPSG:32643`). Using `geopandas` and `shapely`, the pipeline calculates exact metric properties (`SHAPE_Area` and `SHAPE_Leng`) and compiles them into a finalized, production-ready `.gpkg` Attribute Table.
 
-## 2. Uniqueness and Innovation  
-Most systems blur geometry extraction and object type together. We split them. Our binary mask acts as a structural firewall—multiclass labels only go where roads actually exist, cutting out random mislabels. Topological post-processing cleans up pixel-level errors and forces every road segment to have a clear, consistent classification. Morphological tricks patch up any leftover gaps, making joined-up road vectors. And by using YOLO Seg 26m for instance segmentation, we solve the issue of packed-together structures that stump semantic methods.
+📁 Repository Structure
+├── Live-Demo-Results/          # Full inference results on CG & PB benchmark files
+│   ├── gpkg-files/             # Raw GeoPackage vector files
+│   └── *.pdf                   # High-resolution geospatial vector PDFs
+│                               # (pargaon, chana, bagai, basant, gudheli)
+│
+├── models/                     # Final trained model weights
+│   ├── yolo_seg_26m.pt         # YOLO Seg 26m (buildings)
+│   ├── linknet_resnet34.pt     # LinkNet (road detection)
+│   └── deeplab_resnet50.pt     # DeepLabV3+ (road classification)
+│
+├── inference/                  # Inference scripts
+│   ├── inference_buildings.py  # Sliding-window YOLO inference + GIS post-processing
+│   └── inference_roads.py      # Ensemble road inference + GIS post-processing
+│
+├── training/                   # Training scripts & validation data
+└── requirements.txt
 
-## 3. Technology Stack 
-The core pipeline is built in Python using PyTorch and Segmentation Models PyTorch (SMP). Road features come from LinkNet (ResNet34) and DeepLabV3+ (ResNet50). We handle instance segmentation (for discrete structures) with YOLO Seg 26m. Rasterio drives geospatial data management and sliding window inference. For post-processing, OpenCV bridges gaps, while SciPy handles connected components. We produce output vectors using Shapely for geometry checks and GeoPandas for packaging everything as GeoPackages (`.gpkg`).
 
-## 4. Expected Impact  
-By automating rural cadastral mapping, we can skip manual tracing and deliver accurate maps much faster and for less money. Better cadastral maps improve rural planning and resource allocation, helping local governments manage property and infrastructure efficiently. Consistent, reliable GIS data means state and federal agencies get high-quality, ready-to-use maps for all kinds of rural projects.
+🚀 Running the Pipeline
+Prerequisites
+Python 3.9+
+Installation
+pip install -r requirements.txt
 
-## 5. Test Results & Folder Structure
-We have executed our full automated inference pipeline directly on the provided **CG** and **PB** benchmark test files. 
+For CUDA GPU support (highly recommended for inference speed), install PyTorch manually after the above step using the wheel for your CUDA version. Example for CUDA 12.1:
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
 
-* 📁 **`Live-Demo-Results/`**: Contains the complete, post-processed inference results executed directly on the official CG (Chhattisgarh) and PB (Punjab) live demo files. 
-  * 📂 **`gpkg-files/`**: The raw GeoPackage vector files generated by our models.
-  * 📄 **High-Resolution PDFs**: Geospatial Vector PDFs (e.g., `pargaon.pdf`, `chana.pdf`, `bagai.pdf`, `basant.pdf`, `gudheli.pdf`). **Please zoom in infinitely on these PDFs** to visually verify our edge-matching algorithms, morphological gap-bridging, and clean separation of dense rural structures.
-* 📁 **`models/`**: Contains the final trained weights used for inference (YOLO Seg 26m `.pt`, LinkNet `.pt`, and DeepLab `.pt`).
-* 📁 **`inference/`**:Contains the Python scripts used for AI inference, executing the sliding-window predictions and converting raw GeoTIFFs into cleaned GIS vector files.
-* 📁 **`training/`**: Contains the isolated training scripts and validation data used to train the dual-model architecture.
-
-## 6. Execution Instructions
-To run the automated inference pipeline locally:
-1. Ensure you have Python 3.9+ installed.
-2. Install the required dependencies: 
-   ```bash
-   pip install -r requirements.txt
-
-NOTE: For CUDA GPU support (highly recommended for inference speed), you may need to install PyTorch manually using the appropriate wheel for your CUDA version after running the requirements file. Example for CUDA 12.1:
-Bash
-pip install torch torchvision --index-url [https://download.pytorch.org/whl/cu121](https://download.pytorch.org/whl/cu121)
-
+Running Inference
 Place your target .tif imagery in your designated test folder.
-Update the INPUT_GEOTIFF and OUTPUT_GPKG paths in the configuration section of the inference scripts.
-Run the scripts. The code will automatically handle the sliding-window raster inference, morphological cleaning, coordinate deduplication, and final vectorization to .gpkg.
-7. Note to Evaluators
-We highly recommend beginning your review by opening the PDFs in the Live-Demo-Results/ folder. The generated attribute tables within our raw .gpkg files include calculated metric geometries (SHAPE_Area in square meters, SHAPE_Leng in meters), and specific sub-classifications mapped precisely to the CG and PB datasets.
+Update INPUT_GEOTIFF and OUTPUT_GPKG paths in the configuration section of the relevant inference script.
+Run the script:
+# For buildings
+python inference/inference_buildings.py
+
+# For roads
+python inference/inference_roads.py
+
+The scripts automatically handle sliding-window raster inference, morphological cleaning, coordinate deduplication, and final vectorization to .gpkg.
+
+📊 Test Results
+The full pipeline has been executed on the official CG (Chhattisgarh) and PB (Punjab) benchmark test files. Results are in Live-Demo-Results/.
+The generated .gpkg attribute tables include:
+SHAPE_Area — calculated area in square meters
+SHAPE_Leng — perimeter/length in meters
+Sub-classifications mapped precisely to the CG and PB datasets
+
+🔍 Note to Evaluators
+We recommend beginning your review by opening the PDFs in Live-Demo-Results/. Zoom in infinitely on these vector PDFs to visually verify:
+Edge-matching algorithms
+Morphological gap-bridging for roads under tree canopy
+Clean separation of densely packed rural structures
+
+📈 Expected Impact
+Faster, cheaper mapping: Automates rural cadastral mapping, eliminating slow and expensive manual tracing.
+Better rural planning: Accurate cadastral maps improve resource allocation and infrastructure management for local governments.
+Production-ready GIS data: Delivers consistent, high-quality .gpkg files ready for state and federal agency use.
+
