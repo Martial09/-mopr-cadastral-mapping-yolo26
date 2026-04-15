@@ -1,7 +1,7 @@
 
 # 🛰️ Dual-Branch AI Pipeline for Rural Cadastral Mapping
 
-> **Note for Evaluators:** The Google Form ZIP contains only our baseline **YOLO Seg 26m** architecture, as the portal does not allow post-submission edits. **This GitHub repository is our complete, final submission.** It includes the full dual-model pipeline (YOLO Seg 26m for buildings + LinkNet/DeepLabV3+ for roads), automated inference scripts, and the full suite of high-resolution vector PDFs in `Live-Demo-Results/`.
+> **Note for Evaluators:** The Google Form Submission contains only our baseline **YOLO Seg 26m** architecture, as the Google Form does not allow post-submission file edits. **This GitHub repository is our complete, final submission.** It includes the full dual-model pipeline (YOLO Seg 26m for buildings + LinkNet/DeepLabV3+ for roads), automated inference scripts, and the full suite of high-resolution vector PDFs in `Test-Set-Results/`.
 
 ---
 
@@ -64,9 +64,25 @@ Raw AI pixel outputs are noisy. Our Python inference scripts contain a custom GI
 | Vector Output | Shapely (geometry), GeoPandas (GeoPackage `.gpkg`) |
 
 ---
-
 ## 📁 Repository Structure
-├── Test-Set-Results/ # Full inference results on CG & PB benchmark files │ ├── gpkg-files/ # Raw GeoPackage vector files │ └── *.pdf # High-resolution geospatial vector PDFs │ ├── models/ # Final trained model weights │ ├── yolo_seg_26m.pt │ ├── linknet_resnet34.pt │ └── deeplab_resnet50.pt │ ├── inference/ # Inference scripts │ ├── inference_buildings.py │ └── inference_roads.py │ ├── training/ # Training scripts & validation data └── requirements.txt
+
+```
+├── Live-Demo-Results/          # Full inference results on CG & PB benchmark files
+│   ├── gpkg-files/             # Raw GeoPackage vector files
+│   └── *.pdf                   # High-resolution geospatial vector PDFs
+│
+├── models/                     # Final trained model weights
+│   ├── yolo_seg_26m.pt
+│   ├── linknet_resnet34.pt
+│   └── deeplab_resnet50.pt
+│
+├── inference/                  # Inference scripts
+│   ├── inference_buildings.py
+│   └── inference_roads.py
+│
+├── training/                   # Training scripts & validation data
+└── requirements.txt
+```
 
 ---
 
@@ -98,7 +114,7 @@ The scripts automatically handle sliding-window inference, morphological cleanin
 
 ## 📊 Test Results
 
-The full pipeline has been executed on the official **CG (Chhattisgarh)** and **PB (Punjab)** benchmark files. Results are in `Live-Demo-Results/`.
+The full pipeline has been executed on the official **CG (Chhattisgarh)** and **PB (Punjab)** benchmark files. Results are in `Test-Set-Results/`.
 
 Generated `.gpkg` attribute tables include:
 - `SHAPE_Area` — area in square meters
