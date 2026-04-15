@@ -66,7 +66,7 @@ Raw AI pixel outputs are noisy. Our Python inference scripts contain a custom GI
 ---
 
 ## 📁 Repository Structure
-├── Live-Demo-Results/ # Full inference results on CG & PB benchmark files │ ├── gpkg-files/ # Raw GeoPackage vector files │ └── *.pdf # High-resolution geospatial vector PDFs │ ├── models/ # Final trained model weights │ ├── yolo_seg_26m.pt │ ├── linknet_resnet34.pt │ └── deeplab_resnet50.pt │ ├── inference/ # Inference scripts │ ├── inference_buildings.py │ └── inference_roads.py │ ├── training/ # Training scripts & validation data └── requirements.txt
+├── Test-Set-Results/ # Full inference results on CG & PB benchmark files │ ├── gpkg-files/ # Raw GeoPackage vector files │ └── *.pdf # High-resolution geospatial vector PDFs │ ├── models/ # Final trained model weights │ ├── yolo_seg_26m.pt │ ├── linknet_resnet34.pt │ └── deeplab_resnet50.pt │ ├── inference/ # Inference scripts │ ├── inference_buildings.py │ └── inference_roads.py │ ├── training/ # Training scripts & validation data └── requirements.txt
 
 ---
 
@@ -109,7 +109,7 @@ Generated `.gpkg` attribute tables include:
 
 ## 🔍 Note to Evaluators
 
-Start by opening the PDFs in `Live-Demo-Results/` and **zoom in infinitely** to verify:
+Start by opening the PDFs in `Test-Set-Results/` and **zoom in infinitely** to verify:
 - Edge-matching algorithms
 - Morphological gap-bridging for roads under tree canopy
 - Clean separation of densely packed rural structures
