@@ -1,9 +1,23 @@
-torch
-torchvision
+
+# Segmentation models (infer_comb.py)
+segmentation-models-pytorch
+
+# YOLO (inference-gpu.py)
 ultralytics
-opencv-python
+
+# Geospatial
 rasterio
 geopandas
 shapely
+
+# Image processing
+opencv-python
+scipy
+
+# Utilities
 numpy
-pandas
+tqdm
+
+# NOTE: For CUDA GPU support, install torch/torchvision manually using the
+# appropriate wheel for your CUDA version. Example for CUDA 12.1:
+#   pip install torch==2.5.1+cu121 torchvision --index-url https://download.pytorch.org/whl/cu121
