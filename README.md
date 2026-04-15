@@ -67,7 +67,7 @@ Raw AI pixel outputs are noisy. Our Python inference scripts contain a custom GI
 ## 📁 Repository Structure
 
 ```
-├── Live-Demo-Results/          # Full inference results on CG & PB benchmark files
+├── Test-Set-Results/          # Full inference results on CG & PB benchmark files
 │   ├── gpkg-files/             # Raw GeoPackage vector files
 │   └── *.pdf                   # High-resolution geospatial vector PDFs
 │
@@ -76,12 +76,24 @@ Raw AI pixel outputs are noisy. Our Python inference scripts contain a custom GI
 │   ├── linknet_resnet34.pt
 │   └── deeplab_resnet50.pt
 │
-├── inference/                  # Inference scripts
-│   ├── inference_buildings.py
-│   └── inference_roads.py
+├── inference-scripts/                  # Inference scripts
+│   ├── inference_buildings.py  # Sliding-window YOLO inference + GIS post-processing
+│   └── inference_roads.py      # Ensemble road inference + GIS post-processing
 │
-├── training/                   # Training scripts & validation data
-└── requirements.txt
+├── Training/                   # Training notebooks and outputs for all models
+│   ├── Deeplab/                # DeepLabV3+ multiclass road classification training
+│   │   ├── output/             # Saved checkpoints and logs
+│   │   └── deeplab-train-2.ipynb
+│   ├── Linknet/                # LinkNet binary road segmentation training
+│   │   ├── output/             # Saved checkpoints and logs
+│   │   └── linknet.ipynb
+│   └── Yolo-26-M/              # YOLO Seg 26m building instance segmentation training
+│       ├── Outputs/            # Saved checkpoints and logs
+│       ├── training-1.ipynb
+│       ├── training-2.ipynb
+│       └── training-3.ipynb
+│
+└── requirements.txt            # Python dependencies
 ```
 
 ---
